@@ -14,27 +14,27 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 
-let pointSets
-
-fs.readdir("./gpx/", async (err, files) => {
-    let gpxs = []
-    files.filter(f => f.endsWith(".gpx"))
-        .forEach(f => {
-            console.log("converting: " + f)
-            let gpxString = fs.readFileSync(`./gpx/${f}`)
-            gpxs.push(gpxString)
+function getData() {
+    return new Promise((res, rej) => {
+        fs.readdir("./gpx/", async (err, files) => {
+            let gpxs = []
+            files.filter(f => f.endsWith(".gpx"))
+                .forEach(f => {
+                    
+                    let gpxString = fs.readFileSync(`./gpx/${f}`)
+                    gpxs.push(gpxString)
+                })
+            console.log(`converted ${gpxs.length} sets`)
+            res(await convert(gpxs))            
         })
-    pointSets = await convert(gpxs) 
-    
-    
-    console.log(`converted ${pointSets.length} sets`)
-})
+    })
+}
 
-app.get('/data', (req, res) => {
-    if (pointSets)
-        res.status(200).json(pointSets);
-    else
-        res.status(500).json("not ready, try again");
+
+
+app.get('/data', async (req, res) => {
+        res.status(200).json(await getData());
+    
 });
 
 app.listen(3000, () => {
