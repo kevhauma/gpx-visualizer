@@ -14,6 +14,7 @@ async function convert(gpxs) {
 function getKMLPoints(f) {
     return new Promise((res, rej) => {
         try {
+            
             GPX.parseGpx(f, (error, data) => {
                 if (error) throw error                
                 let filename

@@ -1,4 +1,5 @@
 let data;
+let drawableData;
 let counter = 0;
 let padding = 20;
 let i = 0;
@@ -13,15 +14,19 @@ async function setup() {
     let start = Date.now();
 
     data = await (await fetch(`/data`)).json();
+    
+//    let minLats = []
+//    data.forEach(set=>{
+//        let lats = set.points.map(p=>p.lat)
+//        Math.min(...lats)
+//    })
+    
+    let minLat = Math.min(...data.map(set => Math.min(...set.points.map(p => p.lat))));
+    let maxLat = Math.max(...data.map(set => Math.max(...set.points.map(p => p.lat))));
 
-    let onlyLat = [...data.map(set => [...set.points.map(p => p.lat)])].flat();
-    let onlyLon = [...data.map(set => [...set.points.map(p => p.lon)])].flat();
+    let minLon = Math.min(...data.map(set => Math.min(...set.points.map(p => p.lon))));
+    let maxLon = Math.max(...data.map(set => Math.max(...set.points.map(p => p.lon))));
 
-    const minLat = Math.min(...onlyLat);
-    const maxLat = Math.max(...onlyLat);
-
-    const minLon = Math.min(...onlyLon);
-    const maxLon = Math.max(...onlyLon);
 
 
     let deltaLat = maxLat - minLat;
@@ -50,7 +55,7 @@ async function setup() {
             date: set.date
         };
     });
-    data.sort((a, b) => a.points[0].date > b.points[0].date);
+    drawableData = data.sort((a, b) => a.points[0].date > b.points[0].date);
 }
 
 function mousePressed() {
@@ -58,16 +63,20 @@ function mousePressed() {
 }
 
 function draw() {
-    if (!data) return;
+    if (!drawableData) return;
     stroke(0);
     line(0, w, 0, h);
     strokeWeight(1);
-    data.forEach(set => {
-        let prevP = set.points.shift();
-        for (let p of set.points) {
-            line(prevP.x, prevP.y, p.x, p.y);
-            prevP = p;
-        }
-    })
-    noLoop();
+    let points;
+    if (frameCount % 3 === 0) {
+        points = drawableData.shift().points
+    }
+    if (!points) return
+    let prevP = points.shift();
+    for (let p of points) {
+        line(prevP.x, prevP.y, p.x, p.y);
+        prevP = p;
+    }
+
+
 }
