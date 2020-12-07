@@ -33,7 +33,7 @@ function getKMLPoints(f) {
                     })
                 })
                 let date = trackPoints[0].date
-                let name = `${getYYYYMMDD(date)} ${filename.replace(".gpx","")}`
+                let name = `${filename.replace(".gpx","")}`
                 
 
                 res({

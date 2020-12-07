@@ -24,15 +24,18 @@ function getData() {
                     let gpxString = fs.readFileSync(`./gpx/${f}`)
                     gpxs.push(gpxString)
                 })
+            gpxs = await convert(gpxs)
             console.log(`converted ${gpxs.length} sets`)
-            res(await convert(gpxs))            
+            
+            
+            res(gpxs)            
         })
     })
 }
 
 
 
-app.get('/data', async (req, res) => {
+app.get('/data', async (req, res) => {    
         res.status(200).json(await getData());
     
 });

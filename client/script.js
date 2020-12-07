@@ -1,26 +1,29 @@
-let data;
 let drawableData;
+let drawSpeed = 30;
 let counter = 0;
 let padding = 20;
-let i = 0;
 let w = window.innerWidth;
 let h = window.innerHeight;
 
-async function setup() {
+let totalRoutes = 150; 
+let currentHue = 0;
 
-    colorMode(HSB);
+
+async function setup() {
     createCanvas(w, h);
-    background(255);
+    frameRate(60)
+    colorMode(HSB)
+    background('grey')
     let start = Date.now();
 
-    data = await (await fetch(`/data`)).json();
-    
-//    let minLats = []
-//    data.forEach(set=>{
-//        let lats = set.points.map(p=>p.lat)
-//        Math.min(...lats)
-//    })
-    
+    let data = await (await fetch(`/data`)).json();
+
+    //    let minLats = []
+    //    data.forEach(set=>{
+    //        let lats = set.points.map(p=>p.lat)
+    //        Math.min(...lats)
+    //    })
+
     let minLat = Math.min(...data.map(set => Math.min(...set.points.map(p => p.lat))));
     let maxLat = Math.max(...data.map(set => Math.max(...set.points.map(p => p.lat))));
 
@@ -36,15 +39,20 @@ async function setup() {
     let hRatio = h / deltaLat;
     let ratio = wRatio < hRatio ? wRatio : hRatio;
 
-    let maxWidth = (deltaLon * ratio) - padding
-    let maxHeight = (deltaLat * ratio) - padding
+    let maxWidth = (deltaLon * ratio) - (padding * 2)
+    let maxHeight = (deltaLat * ratio) - (padding * 2)
 
+    let left = (w - maxWidth) / 2
+    let right = left + maxWidth
+    let top = (h - maxHeight) / 2
+    let bottom = top + maxHeight
 
     data = data.map(set => {
         let newPoints = set.points.map(p => {
             let newP = {
-                x: (map(p.lon, minLon, maxLon, padding, maxWidth)).toFixed(2),
-                y: (map(p.lat, minLat, maxLat, maxHeight, padding)).toFixed(2),
+                x: (map(p.lon, minLon, maxLon, left, right)).toFixed(2),
+                y: (map(p.lat, minLat, maxLat, bottom, top)).toFixed(2),
+
                 date: p.date
             };
             return newP;
@@ -55,28 +63,56 @@ async function setup() {
             date: set.date
         };
     });
-    drawableData = data.sort((a, b) => a.points[0].date > b.points[0].date);
+
+    drawableData = data.sort((a, b) => a.points[0].date > b.points[0].date).map(set => new Gpx(set));
+
+    totalRoutes =  drawableData.length
+   
+    
 }
 
 function mousePressed() {
 
 }
+let gpxToDraw = []
+let lastDrawn
 
 function draw() {
+    //    background('green');
+//    background(255);
     if (!drawableData) return;
-    stroke(0);
-    line(0, w, 0, h);
-    strokeWeight(1);
-    let points;
-    if (frameCount % 3 === 0) {
-        points = drawableData.shift().points
-    }
-    if (!points) return
-    let prevP = points.shift();
-    for (let p of points) {
-        line(prevP.x, prevP.y, p.x, p.y);
-        prevP = p;
-    }
 
+    if (!lastDrawn || lastDrawn.state == 2) {
+        lastDrawn = drawableData.shift()
+        if (lastDrawn) {
+            lastDrawn.ready()
+            gpxToDraw.push(lastDrawn)
+        } else {
+            noLoop()
+        }
+    }
+        currentHue = map(gpxToDraw.length,0,totalRoutes,0,255)        
+        stroke(currentHue,255,255)        
+        
+        strokeWeight(1);
+        lastDrawn.draw()
+//    gpxToDraw.forEach(d => {
+//        if (d.state == 1) {
+//            stroke('red')
+//            strokeWeight(3);
+//        } else {
+//            stroke(0)
+//            strokeWeight(lineWidth);
+//        }
+//
+//        d.draw()
+//
+//
+//        if (d.state == 1) {
+//            strokeWeight(0)
+//            textSize(padding)
+//            text(d.name, padding, padding + 20)
+//        }
+//    })
 
 }
